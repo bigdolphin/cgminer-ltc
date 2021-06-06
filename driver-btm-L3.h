@@ -6,21 +6,28 @@
 #include "config.h"
 
 #define GPIO_DEVICE_TEMPLATE    "/sys/class/gpio/gpio%d/value"
-#define TTY_DEVICE_TEMPLATE     "/dev/ttyO%d"
-
-// Beaglebone
-//#define PWM_CTRL_TEMPLATE       "echo %u > /sys/class/pwm/pwm1/duty_ns"
-// RPI3
-#define PWM0_CTRL_TEMPLATE       "echo %u > /sys/class/pwm/pwmchip0/pwm0/duty_cycle"
-#define PWM1_CTRL_TEMPLATE       "echo %u > /sys/class/pwm/pwmchip0/pwm1/duty_cycle"
-
 #define GPIO_SPEED_TEMPLATE     GPIO_DEVICE_TEMPLATE
 #define LED_CTRL_TEMPLATE       "echo %d > /sys/class/gpio/gpio%d/value"
 #define BEEP_CTRL_TEMPLATE      LED_CTRL_TEMPLATE
 
 // Beaglebone
+//#define PWM0_SETUP_TEMPLATE     "echo %u > /sys/class/pwm/pwm0/period_ns"
+//#define PWM1_SETUP_TEMPLATE     "echo %u > /sys/class/pwm/pwm1/period_ns"
+//#define PWM0_ENABLE_TEMPLATE    "echo %d > /sys/class/pwm/pwm0/run"
+//#define PWM1_ENABLE_TEMPLATE    "echo %d > /sys/class/pwm/pwm1/run"
+//#define PWM0_CTRL_TEMPLATE      "echo %u > /sys/class/pwm/pwm0/duty_ns"
+//#define PWM1_CTRL_TEMPLATE      "echo %u > /sys/class/pwm/pwm1/duty_ns"
+//#define TTY_DEVICE_TEMPLATE     "/dev/ttyO%d"
 //#define IIC_DEVIVEE             "/dev/i2c-0"
+
 // RPI3
+#define PWM0_SETUP_TEMPLATE     "echo %u > /sys/class/pwm/pwmchip0/pwm0/period"
+#define PWM1_SETUP_TEMPLATE     "echo %u > /sys/class/pwm/pwmchip0/pwm1/period"
+#define PWM0_ENABLE_TEMPLATE    "echo %d > /sys/class/pwm/pwmchip0/pwm0/enable"
+#define PWM1_ENABLE_TEMPLATE    "echo %d > /sys/class/pwm/pwmchip0/pwm1/enable"
+#define PWM0_CTRL_TEMPLATE      "echo %u > /sys/class/pwm/pwmchip0/pwm0/duty_cycle"
+#define PWM1_CTRL_TEMPLATE      "echo %u > /sys/class/pwm/pwmchip0/pwm1/duty_cycle"
+#define TTY_DEVICE_TEMPLATE     "/dev/ttyUSB%d"
 #define IIC_DEVIVEE             "/dev/i2c-1"
 
 #define FPGA_SOURCE
@@ -270,10 +277,6 @@ union REG_DATA
 #define BITMAIN_REAL_TEMP_CHIP_NUM 2
 #endif
 #define BITMAIN_MAX_TEMP_CHIP_NUM 3 // Each Chain
-
-
-
-
 
 #define PWM_ADJUST_FACTOR               ((100 - MIN_PWM_PERCENT)/(MAX_FAN_TEMP - MIN_FAN_TEMP))
 #define PWM_SCALE                       50
