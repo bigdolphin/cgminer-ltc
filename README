@@ -1,4 +1,10 @@
 ******** Big Dolphin *************
+Prepare:
+- Hashboard: Antminer L3+
+- Controller: 
+    + Beaglebone as bitmain: no change
+    + RPI3: add to /boot/config.txt: dtoverlay=pwm-2chan
+    
 Steps:
 git clone https://github.com/bigdolphin/cgminer-ltc
 cd cgminer-ltc
