@@ -47,6 +47,10 @@
 
 #define SET_ASIC_RST_0 "echo 0 > /sys/class/gpio/gpio%d/value"
 #define SET_ASIC_RST_1 "echo 1 > /sys/class/gpio/gpio%d/value"
+#define EXPORT_ASIC_PWM "echo %d >/sys/class/pwm/pwmchip0/export"
+#define EXPORT_ASIC_GPIO "echo %d >/sys/class/gpio/export"
+#define SET_ASIC_GPIO_IN "echo in > /sys/class/gpio/gpio%d/direction"
+#define SET_ASIC_GPIO_OUT "echo out > /sys/class/gpio/gpio%d/direction"
 
 struct thr_info *read_nonce_reg_id;                 // thread id for read nonce and register
 struct thr_info *check_miner_status_id;                  // thread id for check system
@@ -58,11 +62,19 @@ struct thr_info *scan_reg_id;
 
 
 uint64_t h = 0;
-int const plug[BITMAIN_MAX_CHAIN_NUM] = {51,48,47,44};
+// BeagleBone
+// int const plug[BITMAIN_MAX_CHAIN_NUM] = {51,48,47,44};
+// RPI3
+int const plug[BITMAIN_MAX_CHAIN_NUM] = {4,17,27,22};
 int const tty[BITMAIN_MAX_CHAIN_NUM] = {1,2,4,5};
-int const beep = 20;
-int const red_led = 45;
-int const green_led = 23;
+// BeagleBone
+// int const beep = 20;
+// int const red_led = 45;
+// int const green_led = 23;
+// RPI3
+int const beep = 26;
+int const red_led = 5;
+int const green_led = 6;
 int const fan_speed[BITMAIN_MAX_FAN_NUM] = {112,110};
 int const i2c_slave_addr[BITMAIN_MAX_CHAIN_NUM] = {0xa0,0xa2,0xa4,0xa6};
 struct dev_info dev_info[BITMAIN_MAX_CHAIN_NUM];
@@ -583,9 +595,16 @@ void set_PWM(unsigned char pwm_percent)
     }
     dev.duty_ns = PWM_PERIOD_NS * temp_pwm_percent /100;
     dev.pwm_percent = temp_pwm_percent;
-    applog(LOG_DEBUG,"set pwm duty_ns %d",dev.duty_ns);
-    sprintf(buf,PWM_CTRL_TEMPLATE,dev.duty_ns);
+    // Beaglebone
+    //applog(LOG_DEBUG,"set pwm duty_ns %d",dev.duty_ns);
+    //sprintf(buf,PWM_CTRL_TEMPLATE,dev.duty_ns);
+    // RPI
+    applog(LOG_DEBUG,"set pwm duty_cycle %d",dev.duty_ns);
+    sprintf(buf,PWM0_CTRL_TEMPLATE,dev.duty_ns);
     system(buf);
+    sprintf(buf,PWM1_CTRL_TEMPLATE,dev.duty_ns);
+    system(buf);
+
 }
 
 
@@ -1401,6 +1420,7 @@ void check_chain(struct bitmain_L3_info *info)
 {
     int i,fd,ret;
     char dev_fname[PATH_MAX],command[2];
+
     for(i = 0; i < sizeof(plug)/sizeof(int); i++)
     {
         sprintf(dev_fname,GPIO_DEVICE_TEMPLATE,plug[i]);
@@ -3402,7 +3422,7 @@ int bitmain_L3_init(struct bitmain_L3_info *info)
     struct init_config config_parameter;
     int i = 0,x = 0,y = 0,check_asic_times = 0;
     bool check_asic_fail = false;
-
+    
     memcpy(&config_parameter, &config, sizeof(struct init_config));
 
     sprintf(g_miner_version, "1.0.1.3");
@@ -3751,11 +3771,45 @@ static bool bitmain_L3_prepare(struct thr_info *thr)
 {
     struct cgpu_info *bitmain_L3 = thr->cgpu;
     struct bitmain_L3_info *info = bitmain_L3->device_data;
+    char gpioBuf[128] = "";
+    int i;
+
+    for(i = 0; i < sizeof(plug)/sizeof(int); i++)
+    {
+	sprintf(gpioBuf, EXPORT_ASIC_GPIO, plug[i]);
+        system(gpioBuf);
+        sprintf(gpioBuf, SET_ASIC_GPIO_IN, plug[i]);
+        system(gpioBuf);
+    }
+    sprintf(gpioBuf, EXPORT_ASIC_GPIO, beep);
+    system(gpioBuf);
+    sprintf(gpioBuf, SET_ASIC_GPIO_OUT, beep);
+    system(gpioBuf);
+    sprintf(gpioBuf, EXPORT_ASIC_GPIO, red_led);
+    system(gpioBuf);
+    sprintf(gpioBuf, SET_ASIC_GPIO_OUT, red_led);
+    system(gpioBuf);
+    sprintf(gpioBuf, EXPORT_ASIC_GPIO, green_led);
+    system(gpioBuf);
+    sprintf(gpioBuf, SET_ASIC_GPIO_OUT, green_led);
+    system(gpioBuf);
+    sprintf(gpioBuf, EXPORT_ASIC_PWM, 0);
+    system(gpioBuf);
+    sprintf(gpioBuf, EXPORT_ASIC_PWM, 1);
+    system(gpioBuf);  
+    // RPI3
+    sprintf(gpioBuf, "echo %lu > /sys/class/pwm/pwmchip0/pwm0/period", PWM_PERIOD_NS);
+    system(gpioBuf);  
+    sprintf(gpioBuf, "echo %lu > /sys/class/pwm/pwmchip0/pwm1/period", PWM_PERIOD_NS);
+    system(gpioBuf);  
+    sprintf(gpioBuf, "echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable");
+    system(gpioBuf);  
+    sprintf(gpioBuf, "echo 1 > /sys/class/pwm/pwmchip0/pwm1/enable");
+    system(gpioBuf);  
 
     info->thr = thr;
     mutex_init(&info->lock);
     cglock_init(&info->update_lock);
-
 
     struct init_config L3_config =
     {
@@ -3957,4 +4011,3 @@ struct device_drv bitmainL3_drv =
     .get_statline_before = get_bitmain_statline_before,
     .thread_shutdown = bitmain_L3_shutdown,
 };
-
