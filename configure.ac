@@ -167,7 +167,7 @@ AM_CONDITIONAL([HAS_BITMAIN_C5], [test x$bitmain_c5 = xyes])
 bitmain_LTC="no"
 
 AC_ARG_ENABLE([bitmain_LTC],
-	[AC_HELP_STRING([--enable-bitmain-ltc],[Compile support for Bitmain L3(default disabled)])],
+	[AC_HELP_STRING([--enable-bitmain-LTC],[Compile support for Bitmain L3(default disabled)])],
 	[bitmain_LTC=$enableval]
 	)
 AC_ARG_ENABLE([bitmain_l3],
