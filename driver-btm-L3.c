@@ -3783,6 +3783,12 @@ static bool bitmain_L3_prepare(struct thr_info *thr)
         system(gpioBuf);
         sprintf(gpioBuf, SET_ASIC_GPIO_IN, plug[i]);
         system(gpioBuf);
+	sprintf(gpioBuf, UNEXPORT_ASIC_GPIO, g_gpio_data[i], g_gpio_data[i]);
+        system(gpioBuf);
+	sprintf(gpioBuf, EXPORT_ASIC_GPIO, g_gpio_data[i]);
+        system(gpioBuf);
+        sprintf(gpioBuf, SET_ASIC_GPIO_OUT, g_gpio_data[i]);
+        system(gpioBuf);
     }
     sprintf(gpioBuf, UNEXPORT_ASIC_GPIO, beep, beep);
     system(gpioBuf);
