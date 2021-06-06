@@ -285,6 +285,7 @@ struct bitmain_info
     pthread_cond_t qcond;
     cgsem_t write_sem;
     int nonces;
+    int auto_nonces;
     int fifo_space;
     int hw_version[4];
     unsigned int last_work_block;
