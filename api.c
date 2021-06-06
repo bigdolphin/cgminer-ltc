@@ -2244,6 +2244,8 @@ static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     bool io_open = false;
     int numasc = 0;
     int numpga = 0;
+    int i = 0;
+    int devcount = 0;
 
 #ifdef HAVE_AN_ASIC
     numasc = numascs();
@@ -2297,6 +2299,9 @@ static void edevstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     bool io_open = false;
     int numasc = 0;
     int numpga = 0;
+    int i = 0;
+    int devcount = 0;
+
 #ifdef USE_USBUTILS
     time_t howoldsec = 0;
 #endif
