@@ -47,10 +47,18 @@
 
 #define SET_ASIC_RST_0 "echo 0 > /sys/class/gpio/gpio%d/value"
 #define SET_ASIC_RST_1 "echo 1 > /sys/class/gpio/gpio%d/value"
-#define EXPORT_ASIC_PWM "echo %d >/sys/class/pwm/pwmchip0/export"
-#define EXPORT_ASIC_GPIO "echo %d >/sys/class/gpio/export"
+#define UNEXPORT_ASIC_GPIO "test -d '/sys/class/gpio/gpio%d' && echo %d > /sys/class/gpio/unexport"
+#define EXPORT_ASIC_GPIO "echo %d > /sys/class/gpio/export"
 #define SET_ASIC_GPIO_IN "echo in > /sys/class/gpio/gpio%d/direction"
 #define SET_ASIC_GPIO_OUT "echo out > /sys/class/gpio/gpio%d/direction"
+
+// Beaglebone
+#define UNEXPORT_ASIC_PWM "test -d '/sys/class/pwm/pwm%d' && echo %d >/sys/class/pwm/unexport"
+#define EXPORT_ASIC_PWM "echo %d >/sys/class/pwm/export"
+
+// RPI3
+#define UNEXPORT_ASIC_PWM "test -d '/sys/class/pwm/pwmchip0/pwm%d' && echo %d >/sys/class/pwm/pwmchip0/unexport"
+#define EXPORT_ASIC_PWM "echo %d >/sys/class/pwm/pwmchip0/export"
 
 struct thr_info *read_nonce_reg_id;                 // thread id for read nonce and register
 struct thr_info *check_miner_status_id;                  // thread id for check system
@@ -62,30 +70,32 @@ struct thr_info *scan_reg_id;
 
 
 uint64_t h = 0;
+
 // BeagleBone
 // int const plug[BITMAIN_MAX_CHAIN_NUM] = {51,48,47,44};
-// RPI3
-int const plug[BITMAIN_MAX_CHAIN_NUM] = {4,17,27,22};
-int const tty[BITMAIN_MAX_CHAIN_NUM] = {1,2,4,5};
-// BeagleBone
+//static int g_gpio_data[BITMAIN_MAX_CHAIN_NUM] = {5, 4, 27, 22};
+//int const tty[BITMAIN_MAX_CHAIN_NUM] = {1,2,4,5};
 // int const beep = 20;
 // int const red_led = 45;
 // int const green_led = 23;
+
 // RPI3
-int const beep = 26;
-int const red_led = 5;
-int const green_led = 6;
+int const plug[BITMAIN_MAX_CHAIN_NUM] = {4,17,27,22};
+static int g_gpio_data[BITMAIN_MAX_CHAIN_NUM] = {6, 13, 19, 26};
+int const tty[BITMAIN_MAX_CHAIN_NUM] = {0,1,2,3};
+int const beep = 5;
+int const red_led = 23;
+int const green_led = 24;
+
 int const fan_speed[BITMAIN_MAX_FAN_NUM] = {112,110};
 int const i2c_slave_addr[BITMAIN_MAX_CHAIN_NUM] = {0xa0,0xa2,0xa4,0xa6};
 struct dev_info dev_info[BITMAIN_MAX_CHAIN_NUM];
-
 
 int opt_bitmain_L3_freq = 100;
 int opt_bitmain_L3_voltage = 176;
 int opt_bitmain_fan_pwm = 30;
 int last_temperature = 0, temp_highest = 0;
 int8_t opt_bitmain_L3_core_temp = 2;
-
 
 bool update_asic_num = false;
 bool opt_bitmain_fan_ctrl = false;
@@ -127,8 +137,6 @@ struct nonce_buf nonce_fifo;
 struct reg_buf reg_fifo;
 struct all_parameters dev;
 struct timeval tv_send_job = {0, 0};
-
-static int g_gpio_data[BITMAIN_MAX_CHAIN_NUM] = {5, 4, 27, 22};
 
 speed_t tiospeed_t(int baud)
 {
@@ -595,16 +603,11 @@ void set_PWM(unsigned char pwm_percent)
     }
     dev.duty_ns = PWM_PERIOD_NS * temp_pwm_percent /100;
     dev.pwm_percent = temp_pwm_percent;
-    // Beaglebone
-    //applog(LOG_DEBUG,"set pwm duty_ns %d",dev.duty_ns);
-    //sprintf(buf,PWM_CTRL_TEMPLATE,dev.duty_ns);
-    // RPI
     applog(LOG_DEBUG,"set pwm duty_cycle %d",dev.duty_ns);
     sprintf(buf,PWM0_CTRL_TEMPLATE,dev.duty_ns);
     system(buf);
     sprintf(buf,PWM1_CTRL_TEMPLATE,dev.duty_ns);
     system(buf);
-
 }
 
 
@@ -703,8 +706,6 @@ static unsigned int getNum(const char* buffer)
     return (atoi(startPos));
 
 }
-
-
 
 void check_fan_speed(void)
 {
@@ -3776,35 +3777,46 @@ static bool bitmain_L3_prepare(struct thr_info *thr)
 
     for(i = 0; i < sizeof(plug)/sizeof(int); i++)
     {
+	sprintf(gpioBuf, UNEXPORT_ASIC_GPIO, plug[i], plug[i]);
+        system(gpioBuf);
 	sprintf(gpioBuf, EXPORT_ASIC_GPIO, plug[i]);
         system(gpioBuf);
         sprintf(gpioBuf, SET_ASIC_GPIO_IN, plug[i]);
         system(gpioBuf);
     }
+    sprintf(gpioBuf, UNEXPORT_ASIC_GPIO, beep, beep);
+    system(gpioBuf);
     sprintf(gpioBuf, EXPORT_ASIC_GPIO, beep);
     system(gpioBuf);
     sprintf(gpioBuf, SET_ASIC_GPIO_OUT, beep);
+    system(gpioBuf);
+    sprintf(gpioBuf, UNEXPORT_ASIC_GPIO, red_led, red_led);
     system(gpioBuf);
     sprintf(gpioBuf, EXPORT_ASIC_GPIO, red_led);
     system(gpioBuf);
     sprintf(gpioBuf, SET_ASIC_GPIO_OUT, red_led);
     system(gpioBuf);
+    sprintf(gpioBuf, UNEXPORT_ASIC_GPIO, green_led, green_led);
+    system(gpioBuf);
     sprintf(gpioBuf, EXPORT_ASIC_GPIO, green_led);
     system(gpioBuf);
     sprintf(gpioBuf, SET_ASIC_GPIO_OUT, green_led);
     system(gpioBuf);
+    sprintf(gpioBuf, UNEXPORT_ASIC_PWM, 0, 0);
+    system(gpioBuf);
     sprintf(gpioBuf, EXPORT_ASIC_PWM, 0);
+    system(gpioBuf);
+    sprintf(gpioBuf, UNEXPORT_ASIC_PWM, 1, 1);
     system(gpioBuf);
     sprintf(gpioBuf, EXPORT_ASIC_PWM, 1);
     system(gpioBuf);  
-    // RPI3
-    sprintf(gpioBuf, "echo %lu > /sys/class/pwm/pwmchip0/pwm0/period", PWM_PERIOD_NS);
+    sprintf(gpioBuf, PWM0_SETUP_TEMPLATE, PWM_PERIOD_NS);
     system(gpioBuf);  
-    sprintf(gpioBuf, "echo %lu > /sys/class/pwm/pwmchip0/pwm1/period", PWM_PERIOD_NS);
+    sprintf(gpioBuf, PWM1_SETUP_TEMPLATE, PWM_PERIOD_NS);
     system(gpioBuf);  
-    sprintf(gpioBuf, "echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable");
+    sprintf(gpioBuf, PWM0_ENABLE_TEMPLATE, 1);
     system(gpioBuf);  
-    sprintf(gpioBuf, "echo 1 > /sys/class/pwm/pwmchip0/pwm1/enable");
+    sprintf(gpioBuf, PWM1_ENABLE_TEMPLATE, 1);
     system(gpioBuf);  
 
     info->thr = thr;
