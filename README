@@ -1,3 +1,4 @@
+******** Big Dolphin *************
 Steps:
 git clone https://github.com/bigdolphin/cgminer-ltc
 cd cgminer-ltc
@@ -6,7 +7,8 @@ mkdir bin
 cd bin
 ../autogen.sh
 CFLAGS="-O2 -Wall -march=native" ../configure --enable-forcecombo --enable-bitmain --enable-bitmain-LTC --enable-bitmain_l3p
-
+make
+**********************************
 
 This is a multi-threaded multi-pool FPGA and ASIC miner for bitcoin.
 
